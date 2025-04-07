@@ -3,21 +3,20 @@ import numpy as np
 import PIL
 import tensorflow as tf
 import pathlib
+import os
 
 from tensorflow import keras
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
 from keras import layers
-from keras.models import Sequential
+import keras
 from PIL import Image
 
 # Point to image directory
-data_dir = pathlib.Path("C:\\Users\\citiz\\Documents\\UNI\\IoT\\FreshRottenAllFruit")
-
-# Count all images in the directory in all folders
-img_count = len(list(data_dir.glob('**/*'))) # '**/' means check all folders. '*.jpg' means check all files with .jpg extension
-print(img_count)
+data_dir = pathlib.Path("d:\FreshRottenAllFruit")
 
 # Define batch size and image dimensions
-batch_size = 32
+batch_size = 10
 img_height = 180
 img_width = 180
 
@@ -57,8 +56,8 @@ print(class_names)
 AUTOTUNE = tf.data.AUTOTUNE
 
 # Cache images for better performance
-train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
-test_ds = test_ds.cache().prefetch(buffer_size=AUTOTUNE)
+# train_ds = train_ds.cache().shuffle(100).prefetch(buffer_size=AUTOTUNE)
+# test_ds = test_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
 # Normalize images to [0,1]
 normalization_layer = layers.Rescaling(1./255)
@@ -69,7 +68,7 @@ first_image = image_batch[0]
 num_classes = len(class_names)
 
 # Define model architecture (This model is not hight accuracy)
-model = Sequential([
+model = keras.models.Sequential([
   layers.Rescaling(1./255, input_shape=(img_height, img_width, 3)),
   layers.Conv2D(16, 3, padding='same', activation='relu'),
   layers.MaxPooling2D(),
@@ -77,14 +76,8 @@ model = Sequential([
   layers.MaxPooling2D(),
   layers.Conv2D(64, 3, padding='same', activation='relu'),
   layers.MaxPooling2D(),
-  layers.Conv2D(128, 3, padding='same', activation='relu'),
-  layers.MaxPooling2D(),
-  layers.Conv2D(256, 3, padding='same', activation='relu'),
-  layers.MaxPooling2D(),
-  layers.Conv2D(512, 3, padding='same', activation='relu'),
-  layers.MaxPooling2D(),
   layers.Flatten(),
-  layers.Dense(1024, activation='relu'),
+  layers.Dense(128, activation='relu'),
   layers.Dense(num_classes)
 ])
 
@@ -94,7 +87,7 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 
 # Train model
-epochs=1 # Set amount of times to pass through training set
+epochs=10 # Set amount of times to pass through training set
 history = model.fit(
   train_ds,
   steps_per_epoch=int(len(train_ds)/batch_size),
